@@ -652,9 +652,10 @@ if st.session_state.page_mode == 'setup':
     # ------------------------------------------
     
     with st.container(border=True):
-        st.markdown("<div class='input-slide-container'>", unsafe_allow_html=True)
-        st.markdown("<h1>🌐 Neural Translation Visualizer</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size: 2rem; color: #64748b; margin-bottom: 3rem;'>Interactive AI Presentation: English ➡ Tamil</p>", unsafe_allow_html=True)
+        # Centering spacer
+        st.markdown("<div style='height: 10vh;'></div>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; margin-bottom: 1rem;'>🌐 Neural Translation Visualizer</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 2rem; color: #64748b; margin-bottom: 3rem; text-align: center;'>Interactive AI Presentation: English ➡ Tamil</p>", unsafe_allow_html=True)
         
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
