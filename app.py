@@ -685,6 +685,7 @@ if st.session_state.page_mode == 'setup':
                         st.session_state.page_mode = 'presentation'
                         st.session_state.current_stage = 0
                         st.session_state.animation_idx = 0
+                        st.session_state.auto_play = True # Auto-start!
                         st.rerun()
                     except Exception as e:
                         st.error(f"Error: {e}")
@@ -783,10 +784,20 @@ elif st.session_state.page_mode == 'presentation' and st.session_state.translati
 
     # 3. Auto-Play Logic
     if st.session_state.auto_play:
-        # Dynamic delay based on stage content
-        delay = 2.0
-        if st.session_state.current_stage == 4: # Generation stage - faster for tokens
-            delay = 1.0
+        # Faster Dynamic delays
+        delay = 0.8  # Default faster speed
+        
+        # Tokenization & Generation can be faster
+        if st.session_state.current_stage == 0:  # Tokenization
+            delay = 0.5
+        elif st.session_state.current_stage == 4: # Generation
+            delay = 0.5
+        elif st.session_state.current_stage == 2: # Encoder layers
+            delay = 0.6
+            
+        # Add slight pause at end of a slide before transition
+        if is_last_step and not is_last_slide:
+            delay = 1.5
         
         time.sleep(delay)
         
