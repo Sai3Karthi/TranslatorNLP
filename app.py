@@ -160,6 +160,8 @@ if 'current_stage' not in st.session_state:
     st.session_state.current_stage = 0
 if 'animation_idx' not in st.session_state:
     st.session_state.animation_idx = 0
+if 'auto_play' not in st.session_state:
+    st.session_state.auto_play = False
 
 # @st.cache_resource
 def load_model():
@@ -709,11 +711,16 @@ elif st.session_state.page_mode == 'presentation' and st.session_state.translati
     max_steps = get_stage_max_steps(st.session_state.current_stage, result)
     total_stages = len(STAGES)
     
+    # State checks
+    is_last_slide = (st.session_state.current_stage == len(STAGES) - 1)
+    is_last_step = (st.session_state.animation_idx >= max_steps - 1)
+    
     # Custom Navigation UI
-    col1, col2, col3, col4 = st.columns([1, 4, 1, 1])
+    col1, col2, col3, col4, col5 = st.columns([1, 1.5, 3, 1, 1])
     
     with col1:
         if st.button("◀ Back", use_container_width=True):
+            st.session_state.auto_play = False # Stop auto-play on manual interaction
             if st.session_state.animation_idx > 0:
                 st.session_state.animation_idx -= 1
                 st.rerun()
@@ -723,21 +730,30 @@ elif st.session_state.page_mode == 'presentation' and st.session_state.translati
                 st.rerun()
                 
     with col2:
+        if st.session_state.auto_play:
+            if st.button("⏸ Pause", type="primary", use_container_width=True):
+                st.session_state.auto_play = False
+                st.rerun()
+        else:
+            if st.button("▶ Auto-Play", use_container_width=True):
+                st.session_state.auto_play = True
+                st.rerun()
+                
+    with col3:
         # Progress Info
         current_step = st.session_state.animation_idx + 1
         st.markdown(f"<div style='text-align: center; font-size: 1.2rem; padding-top: 10px; color: #64748b;'><b>{STAGES[st.session_state.current_stage]}</b> • Step {current_step}/{max_steps}</div>", unsafe_allow_html=True)
 
-    with col3:
+    with col4:
         # Smart "Next" Button
-        is_last_slide = (st.session_state.current_stage == len(STAGES) - 1)
-        is_last_step = (st.session_state.animation_idx >= max_steps - 1)
-        
         if is_last_slide and is_last_step:
             if st.button("🔄 Restart", type="primary", use_container_width=True):
                 st.session_state.page_mode = 'setup'
+                st.session_state.auto_play = False
                 st.rerun()
         else:
             if st.button("Next ▶", type="primary", use_container_width=True):
+                st.session_state.auto_play = False # Stop auto-play on manual interaction
                 if not is_last_step:
                     st.session_state.animation_idx += 1
                     st.rerun()
@@ -746,9 +762,30 @@ elif st.session_state.page_mode == 'presentation' and st.session_state.translati
                     st.session_state.animation_idx = 0
                     st.rerun()
 
-    with col4:
+    with col5:
         if st.button("🏠", help="Home", use_container_width=True):
             st.session_state.page_mode = 'setup'
+            st.session_state.auto_play = False
+            st.rerun()
+
+    # 3. Auto-Play Logic
+    if st.session_state.auto_play:
+        # Dynamic delay based on stage content
+        delay = 2.0
+        if st.session_state.current_stage == 4: # Generation stage - faster for tokens
+            delay = 1.0
+        
+        time.sleep(delay)
+        
+        if not is_last_step:
+            st.session_state.animation_idx += 1
+            st.rerun()
+        elif not is_last_slide:
+            st.session_state.current_stage += 1
+            st.session_state.animation_idx = 0
+            st.rerun()
+        else:
+            st.session_state.auto_play = False
             st.rerun()
 
 else:
