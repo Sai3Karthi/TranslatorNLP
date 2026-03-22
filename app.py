@@ -152,6 +152,43 @@ st.markdown("""
         text-align: center;
     }
     
+    /* Missing styles for Final Slide */
+    .visual-card {
+        padding: 1rem;
+    }
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+    }
+    .token-input {
+        background: #eff6ff;
+        border: 1.5px solid #3b82f6;
+        color: #1e40af;
+    }
+    .token-output {
+        background: #f0fdf4;
+        border: 1.5px solid #22c55e;
+        color: #15803d;
+    }
+    .flow-arrow {
+        text-align: center;
+        color: #9ca3af;
+        margin: 1rem 0;
+    }
+    .translation-box {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        font-size: 2.2rem;
+        font-weight: 700;
+        text-align: center;
+        margin-top: 2rem;
+        box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4);
+    }
+    
     /* Plotly Charts */
     .js-plotly-plot .plotly .modebar { display: none !important; }
 
@@ -566,26 +603,25 @@ def render_stage_5(result):
                 clean = token.replace('▁', '').strip() or '·'
                 output_html += f'<span class="token-modern token-output">{html.escape(clean)}</span>'
 
-            full_html = textwrap.dedent(f'''
-            <div class="visual-card">
-                <div class="section-title">✅ Complete Translation</div>
+            st.markdown(f"""
+<div class="visual-card">
+    <div class="section-title">✅ Complete Translation</div>
 
-                <p style='font-size: 1.25rem; color: #6b7280; margin: 1.5rem 0 0.5rem 0; font-weight: 600;'>Input (English):</p>
-                <div style="margin-bottom: 2rem;">
-                    {input_html}
-                </div>
+    <p style='font-size: 1.25rem; color: #6b7280; margin: 1.5rem 0 0.5rem 0; font-weight: 600;'>Input (English):</p>
+    <div style="margin-bottom: 2rem;">
+        {input_html}
+    </div>
 
-                <div class="flow-arrow" style="font-size: 3rem;">⬇</div>
+    <div class="flow-arrow" style="font-size: 3rem;">⬇</div>
 
-                <p style='font-size: 1.25rem; color: #6b7280; margin: 1rem 0 0.5rem 0; font-weight: 600;'>Output (Tamil):</p>
-                <div style="margin-bottom: 2rem;">
-                    {output_html}
-                </div>
+    <p style='font-size: 1.25rem; color: #6b7280; margin: 1rem 0 0.5rem 0; font-weight: 600;'>Output (Tamil):</p>
+    <div style="margin-bottom: 2rem;">
+        {output_html}
+    </div>
 
-                <div class="translation-box">{result["translation"]}</div>
-            </div>
-            ''')
-            st.markdown(full_html, unsafe_allow_html=True)
+    <div class="translation-box">{result["translation"]}</div>
+</div>
+""", unsafe_allow_html=True)
 
         with col2:
             st.markdown("### 📊 Translation Summary")
