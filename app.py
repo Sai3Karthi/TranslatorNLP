@@ -135,6 +135,12 @@ st.markdown("""
         min-height: 3.5rem;
         margin-top: 10px;
     }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
 
     /* Input Slide Specifics */
     .input-slide-container {
@@ -718,31 +724,46 @@ elif st.session_state.page_mode == 'presentation' and st.session_state.translati
     # Custom Navigation UI
     col1, col2, col3, col4, col5 = st.columns([1, 1.5, 3, 1, 1])
     
+    # Callbacks to ensure state persistence
+    def toggle_autoplay():
+        st.session_state.auto_play = not st.session_state.auto_play
+        
+    def stop_autoplay():
+        st.session_state.auto_play = False
+        
+    def next_step():
+        st.session_state.auto_play = False
+        max_s = get_stage_max_steps(st.session_state.current_stage, result)
+        last_sl = (st.session_state.current_stage == len(STAGES) - 1)
+        last_st = (st.session_state.animation_idx >= max_s - 1)
+        
+        if not last_st:
+            st.session_state.animation_idx += 1
+        elif not last_sl:
+            st.session_state.current_stage += 1
+            st.session_state.animation_idx = 0
+            
+    def prev_step():
+        st.session_state.auto_play = False
+        if st.session_state.animation_idx > 0:
+            st.session_state.animation_idx -= 1
+        elif st.session_state.current_stage > 0:
+            st.session_state.current_stage -= 1
+            st.session_state.animation_idx = 0 
+            
     with col1:
-        if st.button("◀ Back", use_container_width=True):
-            st.session_state.auto_play = False # Stop auto-play on manual interaction
-            if st.session_state.animation_idx > 0:
-                st.session_state.animation_idx -= 1
-                st.rerun()
-            elif st.session_state.current_stage > 0:
-                st.session_state.current_stage -= 1
-                st.session_state.animation_idx = 0 # Start of prev slide
-                st.rerun()
+        st.button("◀ Back", use_container_width=True, on_click=prev_step)
                 
     with col2:
-        if st.session_state.auto_play:
-            if st.button("⏸ Pause", type="primary", use_container_width=True):
-                st.session_state.auto_play = False
-                st.rerun()
-        else:
-            if st.button("▶ Auto-Play", use_container_width=True):
-                st.session_state.auto_play = True
-                st.rerun()
+        label = "⏸ Pause" if st.session_state.auto_play else "▶ Auto-Play"
+        type_btn = "primary" if st.session_state.auto_play else "secondary"
+        st.button(label, type=type_btn, use_container_width=True, on_click=toggle_autoplay)
                 
     with col3:
         # Progress Info
         current_step = st.session_state.animation_idx + 1
-        st.markdown(f"<div style='text-align: center; font-size: 1.2rem; padding-top: 10px; color: #64748b;'><b>{STAGES[st.session_state.current_stage]}</b> • Step {current_step}/{max_steps}</div>", unsafe_allow_html=True)
+        status = " <span style='color: #2563eb; font-size: 0.8em; animation: pulse 1s infinite;'>(Running...)</span>" if st.session_state.auto_play else ""
+        st.markdown(f"<div style='text-align: center; font-size: 1.2rem; padding-top: 10px; color: #64748b;'><b>{STAGES[st.session_state.current_stage]}</b> • Step {current_step}/{max_steps}{status}</div>", unsafe_allow_html=True)
 
     with col4:
         # Smart "Next" Button
@@ -752,15 +773,7 @@ elif st.session_state.page_mode == 'presentation' and st.session_state.translati
                 st.session_state.auto_play = False
                 st.rerun()
         else:
-            if st.button("Next ▶", type="primary", use_container_width=True):
-                st.session_state.auto_play = False # Stop auto-play on manual interaction
-                if not is_last_step:
-                    st.session_state.animation_idx += 1
-                    st.rerun()
-                elif not is_last_slide:
-                    st.session_state.current_stage += 1
-                    st.session_state.animation_idx = 0
-                    st.rerun()
+            st.button("Next ▶", type="primary", use_container_width=True, on_click=next_step)
 
     with col5:
         if st.button("🏠", help="Home", use_container_width=True):
