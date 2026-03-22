@@ -207,23 +207,35 @@ if 'auto_play' not in st.session_state:
     st.session_state.auto_play = False
 
 # @st.cache_resource
-def load_model():
+def load_model(model_name="Helsinki-NLP/opus-mt-en-dra"):
     # Force reload of the class definition if it changed
     import model_wrapper
     import importlib
     importlib.reload(model_wrapper)
     from model_wrapper import TranslationVisualizer
     
-    viz = TranslationVisualizer()
+    # Check if we already have a visualizer and if it needs updating
+    if 'visualizer' in st.session_state and st.session_state.visualizer is not None:
+        st.session_state.visualizer.update_model(model_name)
+        return st.session_state.visualizer
+        
+    viz = TranslationVisualizer(model_name)
     viz.load_model()
     return viz
 
 # Examples
-EXAMPLES = {
+EXAMPLES_EN_TA = {
     "Government": ">>tam<< The government has announced new rules for public safety.",
     "Simple": ">>tam<< The cat sits on the mat.",
     "Technology": ">>tam<< Technology is changing our world.",
     "Question": ">>tam<< How are you today?",
+}
+
+EXAMPLES_TA_EN = {
+    "Government": "அரசாங்கம் பொது பாதுகாப்புக்காக புதிய விதிகளை அறிவித்துள்ளது.",
+    "Simple": "பூனை பாயில் அமர்ந்துள்ளது.",
+    "Technology": "தொழில்நுட்பம் நம் உலகத்தை மாற்றுகிறது.",
+    "Question": "நீங்கள் இன்று எப்படி இருக்கிறீர்கள்?",
 }
 
 STAGES = [
@@ -697,21 +709,34 @@ if st.session_state.page_mode == 'setup':
     
     with st.container(border=True):
         # Centering spacer
-        st.markdown("<div style='height: 10vh;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 5vh;'></div>", unsafe_allow_html=True)
         st.markdown("<h1 style='text-align: center; margin-bottom: 1rem;'>🌐 Neural Translation Visualizer</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size: 2rem; color: #64748b; margin-bottom: 3rem; text-align: center;'>Interactive AI Presentation: English ➡ Tamil</p>", unsafe_allow_html=True)
         
+        # Translation Mode Selector
+        col_m1, col_m2, col_m3 = st.columns([1, 2, 1])
+        with col_m2:
+            mode = st.radio("Select Direction:", ["English ➡ Tamil", "Tamil ➡ English"], horizontal=True)
+            st.markdown(f"<p style='font-size: 1.5rem; color: #64748b; margin-bottom: 2rem; text-align: center;'>Interactive AI Presentation</p>", unsafe_allow_html=True)
+        
+        if mode == "English ➡ Tamil":
+            examples = EXAMPLES_EN_TA
+            model_name = "Helsinki-NLP/opus-mt-en-dra"
+        else:
+            examples = EXAMPLES_TA_EN
+            model_name = "Helsinki-NLP/opus-mt-mul-en"
+
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            selected = st.selectbox("Choose an Example:", list(EXAMPLES.keys()))
-            text_input = st.text_input("Or type your own:", value=EXAMPLES[selected])
+            selected = st.selectbox("Choose an Example:", list(examples.keys()))
+            default_text = examples[selected]
+            text_input = st.text_input("Or type your own:", value=default_text)
             
             st.markdown("<br>", unsafe_allow_html=True)
             
             if st.button("🚀 Start Presentation", type="primary", use_container_width=True):
-                with st.spinner("Initializing AI Model..."):
+                with st.spinner(f"Loading {model_name}..."):
                     try:
-                        viz = load_model()
+                        viz = load_model(model_name)
                         st.session_state.visualizer = viz
                         
                         # Perform translation

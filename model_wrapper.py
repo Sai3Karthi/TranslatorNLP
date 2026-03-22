@@ -24,6 +24,20 @@ class TranslationVisualizer:
         self.model = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    def update_model(self, model_name: str):
+        """
+        Update the model if the requested model name is different from the current one.
+        
+        Args:
+            model_name: The new model identifier to load
+        """
+        if self.model_name != model_name:
+            self.model_name = model_name
+            # Reset model and tokenizer to force reload
+            self.model = None
+            self.tokenizer = None
+            self.load_model()
+
     def load_model(self):
         """Load the tokenizer and model (cached for performance)"""
         if self.tokenizer is None or self.model is None:
@@ -165,7 +179,15 @@ class TranslationVisualizer:
         inputs = self.tokenizer(text, return_tensors="pt").to(self.device)
 
         # Start with the decoder start token
-        decoder_input_ids = torch.tensor([[self.model.config.decoder_start_token_id]]).to(self.device)
+        # Handle cases where decoder_start_token_id is not set or needs special handling for multilingual models
+        start_token_id = self.model.config.decoder_start_token_id
+        if start_token_id is None:
+             start_token_id = self.model.config.pad_token_id
+             if start_token_id is None:
+                 # Last resort fallback if pad_token_id is also None (unlikely but safe)
+                 start_token_id = 0
+             
+        decoder_input_ids = torch.tensor([[start_token_id]]).to(self.device)
 
         steps = []
 
@@ -184,6 +206,13 @@ class TranslationVisualizer:
                 # Mask pad token to prevent generation of pad (common issue with MarianMT)
                 if self.model.config.pad_token_id is not None:
                     next_token_logits[self.model.config.pad_token_id] = -float('inf')
+                
+                # Also mask the decoder_start_token_id just in case it's different but still problematic
+                # However, for multilingual models, sometimes the start token is a language token which might be valid?
+                # Usually not as the NEXT token, but let's be careful.
+                # MarianMT standard behavior:
+                if self.model.config.decoder_start_token_id is not None:
+                     next_token_logits[self.model.config.decoder_start_token_id] = -float('inf')
 
                 # Also mask the decoder_start_token_id just in case it's different but still problematic
                 if self.model.config.decoder_start_token_id is not None:
