@@ -214,10 +214,6 @@ class TranslationVisualizer:
                 if self.model.config.decoder_start_token_id is not None:
                      next_token_logits[self.model.config.decoder_start_token_id] = -float('inf')
 
-                # Also mask the decoder_start_token_id just in case it's different but still problematic
-                if self.model.config.decoder_start_token_id is not None:
-                     next_token_logits[self.model.config.decoder_start_token_id] = -float('inf')
-
                 # Get probabilities
                 probs = torch.softmax(next_token_logits, dim=-1)
 

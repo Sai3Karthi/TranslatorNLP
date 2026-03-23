@@ -615,25 +615,21 @@ def render_stage_5(result):
                 clean = token.replace('▁', '').strip() or '·'
                 output_html += f'<span class="token-modern token-output">{html.escape(clean)}</span>'
 
-            st.markdown(f"""
-<div class="visual-card">
-    <div class="section-title">✅ Complete Translation</div>
-
-    <p style='font-size: 1.25rem; color: #6b7280; margin: 1.5rem 0 0.5rem 0; font-weight: 600;'>Input (English):</p>
-    <div style="margin-bottom: 2rem;">
-        {input_html}
-    </div>
-
-    <div class="flow-arrow" style="font-size: 3rem;">⬇</div>
-
-    <p style='font-size: 1.25rem; color: #6b7280; margin: 1rem 0 0.5rem 0; font-weight: 600;'>Output (Tamil):</p>
-    <div style="margin-bottom: 2rem;">
-        {output_html}
-    </div>
-
-    <div class="translation-box">{result["translation"]}</div>
-</div>
-""", unsafe_allow_html=True)
+            st.markdown(textwrap.dedent(f"""
+                <div class="visual-card">
+                    <div class="section-title">✅ Complete Translation</div>
+                    <p style='font-size: 1.25rem; color: #6b7280; margin: 1.5rem 0 0.5rem 0; font-weight: 600;'>Input:</p>
+                    <div style="margin-bottom: 2rem;">
+                        {input_html}
+                    </div>
+                    <div class="flow-arrow" style="font-size: 3rem;">⬇</div>
+                    <p style='font-size: 1.25rem; color: #6b7280; margin: 1rem 0 0.5rem 0; font-weight: 600;'>Output:</p>
+                    <div style="margin-bottom: 2rem;">
+                        {output_html}
+                    </div>
+                    <div class="translation-box">{result["translation"]}</div>
+                </div>
+            """), unsafe_allow_html=True)
 
         with col2:
             st.markdown("### 📊 Translation Summary")
@@ -642,7 +638,7 @@ def render_stage_5(result):
 
             st.markdown(f"""
             **1. Tokenization**
-            - {len(result['input_tokens'])} English tokens → {len(result['output_tokens'])} Tamil tokens
+            - {len(result['input_tokens'])} source tokens → {len(result['output_tokens'])} target tokens
 
             **2. Embedding**
             - Each token → {result['architecture_info']['hidden_size']}-dimensional vector
@@ -667,11 +663,11 @@ def render_stage_5(result):
             """)
 
             st.info("""
-            **Model:** Helsinki-NLP/opus-mt-en-dra
+            **Model:** {st.session_state.visualizer.model_name}
 
             **Architecture:** MarianMT (Transformer)
 
-            **Training:** Millions of English-Dravidian sentence pairs
+            **Training:** Millions of sentence pairs
             """)
 
 # Initialize Session State
